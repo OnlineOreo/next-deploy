@@ -6,7 +6,7 @@ export default function Home() {
           <div>
             <strong>Mannu Rawat</strong><br></br>
             <span>Software Developer</span>
-            <h2 className="mb-2">This is my First Vercel website to host</h2>
+            <h2 className="mb-2">This is my test website to host in vercel</h2>
             <Button/>
           </div>
       </div>
