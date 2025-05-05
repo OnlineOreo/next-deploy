@@ -1,4 +1,5 @@
 import Button from "./Components/Button";
+import SearchBtn from "./Components/SearchBtn";
 export default function Home() {
   return (
     <>
@@ -8,6 +9,7 @@ export default function Home() {
             <span>Software Developer</span>
             <h2 className="mb-2">This is my test website to host in vercel</h2>
             <Button/>
+            <SearchBtn/>
           </div>
       </div>
     </>
