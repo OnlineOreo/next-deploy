@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
 import PrintCollectionContent from './PrintCollectionContent';
+import SideFilter from "@/app/Components/SideFilter";
+import Results from "@/app/Components/Results";
 import axios from "axios";
 
 function combineFacetData(facetData) {
@@ -12,14 +14,14 @@ function combineFacetData(facetData) {
   return combined;
 }
 
-async function fetachSolrData(searchQuery, startIndex = 0) {
+async function fetchSolrData(searchQuery, startIndex = 0) {
   if (!searchQuery) return { results: [], resultsCount: 0, sideFilterResults: {} };
 
   try {
-    const solrUrl = `${process.env.NEXT_PUBLIC_SOLR_BASE_URL}/solr/Print-collection/select?indent=true&q.op=OR&q=${searchQuery}&rows=15&start=${startIndex}`;
-    const sideFilterUrl = `${process.env.NEXT_PUBLIC_SOLR_BASE_URL}/solr/Print-collection/select?indent=true&q=*:*&fq=${searchQuery}&facet=true&facet.field=dc_publishers_string&facet.field=datacite_rights_string&facet.field=resource_types_string&facet.field=dc_date&facet.field=datacite_creators_string&facet.limit=500&facet.sort=count`;
-    console.log("server run");
-    
+    const solrBase = process.env.NEXT_PUBLIC_SOLR_BASE_URL;
+
+    const solrUrl = `${solrBase}/solr/Print-collection/select?indent=true&q.op=OR&q=${searchQuery}&rows=15&start=${startIndex}`;
+    const sideFilterUrl = `${solrBase}/solr/Print-collection/select?indent=true&q=*:*&fq=${searchQuery}&facet=true&facet.field=dc_publishers_string&facet.field=datacite_rights_string&facet.field=resource_types_string&facet.field=dc_date&facet.field=datacite_creators_string&facet.limit=500&facet.sort=count`;
 
     const [response, sideFilterResponse] = await Promise.all([
       axios.get(solrUrl),
@@ -43,23 +45,27 @@ async function fetachSolrData(searchQuery, startIndex = 0) {
       sideFilterResults
     };
   } catch (error) {
-    console.error("API Error:", error);
+    console.error("Solr fetch failed:", error);
     return { results: [], resultsCount: 0, sideFilterResults: {} };
   }
 }
 
 export default async function PrintCollectionPage({ searchParams }) {
-  const searchParamsObj = await searchParams || {};
-  const searchQuery = searchParamsObj.q || "";
-  const data = await fetachSolrData(searchQuery, 0);
+  const searchQuery = searchParams?.q || "";
+  const data = await fetchSolrData(searchQuery, 0);
 
   return (
-    <Suspense fallback={<div>Loading search results...</div>}>
-      <PrintCollectionContent
-        initialResults={data.results}
-        initialResultsCount={data.resultsCount}
-        initialSideFilterResults={data.sideFilterResults}
-      />
-    </Suspense>
+    <PrintCollectionContent
+      sidebar={
+        <Suspense fallback={<div>Loading filters...</div>}>
+          <SideFilter {...data.sideFilterResults} />
+        </Suspense>
+      }
+      content={
+        <Suspense fallback={<div>Loading results...</div>}>
+          <Results results={data.results} resultsCount={data.resultsCount} />
+        </Suspense>
+      }
+    />
   );
 }
